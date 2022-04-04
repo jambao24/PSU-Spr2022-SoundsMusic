@@ -47,3 +47,21 @@ fout.close()
 # https://dsp.stackexchange.com/questions/53125/write-a-440-hz-sine-wave-to-wav-file-using-python-and-scipy
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html
 wavfile.write('sine.wav', sampleRate, y.astype(numpy.int16))
+
+
+amp2 = amp * 0.5 # half the amplitude of the original value
+y2 = amp2 * numpy.sin(freq * 2 * numpy.pi * t)
+y2 = numpy.clip(y2, -0.5*amp2, 0.5*amp2)
+# the commented out code doesn't actually work
+'''
+for i in y2:
+    if i >= amp2/2:
+        i = amp2/2
+    elif i <= -1 * amp2/2:
+        i = -1 * amp2/2
+'''
+
+plt.plot(y2)
+plt.show()
+
+wavfile.write('clipped.wav', sampleRate, y2.astype(numpy.int16))
