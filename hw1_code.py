@@ -37,35 +37,19 @@ wavfile.write('clipped.wav', sampleRate, y2.astype(numpy.int16))
 #https://stackoverflow.com/questions/30675731/howto-stream-numpy-array-into-pyaudio-stream
 import pyaudio
 
-#filename = 'clipped.wav'
-## Set chunk size of 1024 samples per data frame
-#chunk = 1024
-
-## Open the sound file
-#wf = wave.open(filename, 'rb')
-
 # Create an interface to PortAudio
 p = pyaudio.PyAudio()
 
-# Open a .Stream object to write the WAV file to
 # 'output = True' indicates that the sound will be played rather than recorded
-#stream = p.open(format = p.get_format_from_width(wf.getsampwidth()),
-#                channels = wf.getnchannels(),
-#                rate = wf.getframerate(),
-#                output = True)
 stream = p.open(format = pyaudio.paInt16,
                 channels = 1,
                 rate = sampleRate,
                 output = True)
 
 # Read data in chunks
-#data = wf.readframes(chunk)
 data = y2.astype(numpy.int16).tobytes()
 
 # Play the sound by writing the audio data to the stream
-#while data != '':
-    #stream.write(data)
-    #data = y2.read(chunk)
 stream.write(data)
 
 # Close and terminate the stream
