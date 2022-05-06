@@ -1,8 +1,13 @@
-# PSU-Spr2022-SoundsMusic
-repo for Spring 2022 CS510 (Music, Sound &amp; Computers) code
+# Guitar Notes
+Bart Massey 2022
 
-James Bao
-HW 1 README
+These guitar notes should be a good test for an instrument
+tuner.
 
-hw1_code.py is a Python file and requires the numpy and scipy.io libraries to run. 
-Part 3 works but for some reason I can't test my code in PyCharm since it won't recognize the PyAudio that I've downloaded. 
+* `guitar-a2.wav`: The open A string (roughly 110Hz A[2]).
+* `guitar-a3.wav`: The G string fretted to A (roughly 220Hz A[3]).
+* `guitar-a4.wav`: The high E string fretted to A (roughly 440Hz A[4]).
+
+The guitar is not in great tune.  Also, the
+highest-amplitude string frequency may correspond to some
+harmonic or subharmonic of the intended frequency.

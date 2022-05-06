@@ -37,25 +37,9 @@ x_0 = np.append(x0, x)
 # test case 1: check if gc.wav is being read in as the parameter [44100 samples/sec]
 # 'output = True' indicates that the sound will be played rather than recorded
 # (https://stackoverflow.com/questions/30684230/how-to-check-if-any-sys-argv-argument-equals-a-specific-string-in-python)
-# if ('gc' in inp_name):
-if s_rate == sampleRate2:
-    stream = p.open(format=pyaudio.paInt16,
-                channels=1,
-                rate=sampleRate2,
-                input=True,
-                output=False)
-# test case 2: sine.wav or synth.wav is being read in as the parameter [48000 samples/sec]
-# 'output = True' indicates that the sound will be played rather than recorded
-elif s_rate == sampleRate1:
-    stream = p.open(format=pyaudio.paInt16,
+stream = p.open(format=pyaudio.paInt16,
                 channels=1,
                 rate=sampleRate1,
-                input=True,
-                output=False)
-else:
-    stream = p.open(format=pyaudio.paInt16,
-                channels=1,
-                rate=s_rate,
                 input=True,
                 output=False)
 
@@ -73,9 +57,10 @@ for i in range(N, len(x_0)):
 # decimate the convoluted signal, take every other element
 y_out = y[::2]
 
-if ('gc' in inp_name):
+# write the output at half the sampling rate of the input
+if (s_rate == sampleRate2):
     write(out_name, sRate_2, y_out.astype(np.int16))
-else:
+elif (s_rate == sampleRate1):
     write(out_name, sRate_1, y_out.astype(np.int16))
 
 # Close and terminate the stream
