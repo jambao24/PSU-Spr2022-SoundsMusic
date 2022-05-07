@@ -1,4 +1,5 @@
 import numpy as np
+import struct
 from scipy.io import wavfile
 from scipy.io.wavfile import write
 import scipy.signal.windows as ssw
@@ -88,6 +89,44 @@ if wavInput:
     print(np.round(f_val*s_rate/(n), 1), 'Hz')
 
 
+# Case 2: we're reading in continuous input from the user's microphone
+# https://www.codespeedy.com/get-voice-input-with-microphone-in-python-using-pyaudio-and-speechrecognition/
+# https://www.youtube.com/watch?v=AShHJdSIxkY
 if liveInput:
-    # not added yet
-    print("functionality coming soon!")
+    ## not added yet
+    #print("functionality coming soon!")
+
+    # sampling rate = 48000 samples/s
+    RATE = 48000
+    CHUNK = 4096 # 2 ** 12
+
+    # Create an interface to PortAudio
+    p = pyaudio.PyAudio()
+
+    # 'output = True' indicates that the sound will be played rather than recorded
+    # (https://stackoverflow.com/questions/30684230/how-to-check-if-any-sys-argv-argument-equals-a-specific-string-in-python)
+    stream = p.open(format=pyaudio.paInt16,
+                    channels=1,
+                    rate=RATE,
+                    input=True,
+                    output=True,
+                    frames_per_buffer=CHUNK)
+
+    while True:
+        data = stream.read(CHUNK)
+        x_0 = np.array(struct.unpack(str(2 * CHUNK) + 'B', data), dtype='b')[::2] + 127
+        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.windows.triang.html
+        # create triangular window and multiply signal by window
+        tri_window = ssw.triang(len(x_0))
+        x_new = np.multiply(x_0, tri_window)
+
+        # https://stackoverflow.com/questions/4364823/how-do-i-obtain-the-frequencies-of-each-value-in-an-fft?lq=1
+        x_spec_output = sf.rfft(x_new)
+        # print(abs(x_spec_output))
+        # x_s_o = np.where(x_spec_output >= 0)
+        x_so_mag = np.abs(x_spec_output) / (len(x_0))
+
+        f_val = np.argmax(x_so_mag)
+        # round highest magnitude frequency found to 1 decimal place
+        print(np.round(f_val * RATE / (len(x_0)), 1), 'Hz')
+
