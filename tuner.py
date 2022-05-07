@@ -7,6 +7,20 @@ import matplotlib.pyplot as plt
 import pyaudio
 import sys
 
+'''
+simple function for finding the largest exponent of 2 within the bounds of
+an array length arr_len
+this function is only called with the parameters:
+1) length of the wav file numpy array len(x)
+2) initial value of n (2**17)
+'''
+def find_exponent_2(arr_len, val):
+    if (val >= arr_len):
+        return find_exponent_2(arr_len, val//2)
+    else:
+        return val
+
+
 # https://realpython.com/python-command-line-arguments/
 # https://stackoverflow.com/questions/49309446/python-wrong-number-of-arguments-exception
 if not len(sys.argv) == 2 and not len(sys.argv) == 1:
@@ -17,11 +31,11 @@ wavInput = False
 liveInput = False
 if len(sys.argv) == 2 and sys.argv[0].find("tuner.py") >= 0 and sys.argv[1].find(".wav") >= 0:
     wavInput = True
-elif len(sys.argv) == 2 and sys.argv[0].find("tuner.py") >= 0:
+elif len(sys.argv) == 1 and sys.argv[0].find("tuner.py") >= 0:
     liveInput = True
 # https://stackoverflow.com/questions/20844347/how-would-i-make-a-custom-error-message-in-python
 if not wavInput and not liveInput:
-    raise ValueError('Input must be a wav file (.wav) or tuner.py')
+    raise ValueError('Input must contain tuner.py')
 
 
 # Case 1: we are reading in a wav file
@@ -42,12 +56,24 @@ if wavInput:
                     input=True,
                     output=False)
 
+
+
     # https://stackoverflow.com/questions/12332392/triangle-wave-shaped-array-in-python
 
     # take 1st n samples of input
-    n = (217*4)
-    x_0 = x[10*n:11*n]
+    n = 2 ** 17
+    # Case 1: input contains more than 2 ** 17 samples
+    if (len(x) > n):
+        x_0 = x[:n]
+    # Case 2: input contains less than 2 ** 17 samples
+    # we need to find the largest exponent of 2 that works
+    else:
+        n_0 = find_exponent_2(len(x), n)
+        n = n_0
+        x_0 = x[:n]
+
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.windows.triang.html
+    # create triangular window and multiply signal by window
     tri_window = ssw.triang(n)
     x_new = np.multiply(x_0, tri_window)
 
@@ -55,10 +81,11 @@ if wavInput:
     x_spec_output = sf.rfft(x_new)
     # print(abs(x_spec_output))
     # x_s_o = np.where(x_spec_output >= 0)
-    x_so_mag = np.abs(x_spec_output) / n
+    x_so_mag = np.abs(x_spec_output) / (n)
 
     f_val = np.argmax(x_so_mag)
-    print(f_val*s_rate/n, 'Hz')
+    # round highest magnitude frequency found to 1 decimal place
+    print(np.round(f_val*s_rate/(n), 1), 'Hz')
 
 
 if liveInput:
