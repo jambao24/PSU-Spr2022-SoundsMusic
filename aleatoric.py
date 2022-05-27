@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import pyaudio
 import sounddevice as sd
 import sys
+import argparse
+
 
 # default parameter values if none are given
 
@@ -24,6 +26,42 @@ FRAC = 0.5
 VOL1 = 5.0
 # vol of unaccented beat
 VOL0 = 8.0
+
+# https://www.youtube.com/watch?v=cdblJqEUDNo
+# https://docs.python.org/3/howto/argparse.html
+# parse (optional) agruments
+parser = argparse.ArgumentParser()
+parser.add_argument("--root", type=int, help="MIDI key number as the root tone of the scale")
+parser.add_argument("--beats", type=int, help="time signature of SIG beats per measure")
+parser.add_argument("--bpm", type=float, help="beat frequency of BPM")
+parser.add_argument("--ramp", type=float, help="fraction of the beat time for the attack and release time for the note envelope (0 to 0.5)")
+parser.add_argument("--accent", type=float, help="note volume for the first (accent) beat of each measure (0 to 10)")
+parser.add_argument("--volume", type=float, help="note volume for the unaccented beats of each measure (0 to 10)")
+args = parser.parse_args()
+
+# modify default parameters based on command line argument input
+if args.root and args.root > 116:
+    KEYNUMBER = 116
+if args.root:
+    KEYNUMBER = args.root
+if args.beats:
+    SIG = args.beats
+if args.bpm:
+    BPM = args.bpm
+if args.ramp and args.ramp <= 0.0:
+    FRAC = 0.0
+if args.ramp and args.ramp > 0.5:
+    FRAC = 0.5
+if args.accent and args.accent < 0.0:
+    VOL1 = 0.0
+if args.accent and args.accent > 0.0:
+    VOL1 = 10.0
+if args.volume and args.volume < 0.0:
+    VOL0 = 0.0
+if args.volume and args.volume > 10.0:
+    VOL0 = 10.0
+
+
 
 
 # calculate the frequency of a wave for a given MIDI key number
