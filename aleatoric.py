@@ -66,12 +66,13 @@ p = pyaudio.PyAudio()
 stream = p.open(format=pyaudio.paInt16,
                 channels=1,
                 rate=RATE,
-                input=False,
                 output=True,
-                frames_per_buffer=beat_chunk)
+                frames_per_buffer=4096)
 
 # keep track of the beat number
 beat = 0
+
+y_out = np.linspace(0, 0, beat_chunk)
 
 while (1>0):
     # create sine wave for the current beat
@@ -79,23 +80,28 @@ while (1>0):
     t = np.linspace(0, 2*60/BPM, beat_chunk)
     #amp = np.iinfo(np.int16).max
     f = get_note_freq()
-    y = np.sin(2 * np.pi * f * t)
 
+    # generate square wave if accented beat
+    if beat % SIG == 0:
+        y = 4 * np.floor(f * t) - 2 * np.floor(2 * f * t) + 1
+    # generate sine wave if unaccented beat
+    else:
+        y = np.sin(2 * np.pi * f * t)
+        #y = 8 * np.floor(f * t) - 4 * np.floor(2 * f * t) + 1
 
     # apply the window to the beat...
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.windows.triang.html
     # if FRAC >= 0.5, we create triangular window and multiply signal by window
-    if (FRAC >= 0.5):
-        window = 1 #window = ssw.triang(beat_chunk)
-    # otherwise, we need to use FRAC to generate our own trapezoidal window :(
-    else:
-        window = np.ones(beat_chunk)
-        max1 = round(beat_chunk * FRAC)
-        max2 = beat_chunk - max1
-        # use np.linspace to increment the window up/down from 0/1 to 1/0
-        window[0:max1] = np.linspace(0, 1, max1)
-        window[max2:beat_chunk] = np.linspace(1, 0, max1)
+    #if FRAC >= 0.5:
+    #    window = ssw.triang(beat_chunk)
+    # we need to use FRAC to generate our own trapezoidal window :(
+    window = np.ones(beat_chunk)
+    max1 = round(beat_chunk * FRAC)
+    max2 = beat_chunk - max1
+    # use np.linspace to increment the window up/down from 0/1 to 1/0
+    window[0:max1] = np.linspace(0, 1, max1)
+    window[max2:beat_chunk] = np.linspace(1, 0, max1)
 
     y_new = np.multiply(window, y)
 
@@ -104,11 +110,17 @@ while (1>0):
     else:
         y_new *= (10 ** (-6*(10-VOL0)/20))
 
+
+    # append to output wav file
+    y_out = np.append(y_out, y_new)
+
     # play audio in PyAudio
     stream.write(y_new)
 
     # update the beat number
     beat += 1
+
+    write('sample_output.wav', RATE, y_out.astype(np.int16))
 
 
 stream.stop_stream()
