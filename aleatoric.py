@@ -7,12 +7,13 @@ import scipy.signal.windows as ssw
 import scipy.fft as sf
 import matplotlib.pyplot as plt
 import pyaudio
+import sounddevice as sd
 import sys
 
 # default parameter values if none are given
 
 # root
-KEYNUMBER = 72
+KEYNUMBER = 48
 # beat (time signature)
 SIG = 8
 # beats per min
@@ -56,28 +57,31 @@ def get_note_freq():
 # sampling rate = 48000 samples/s
 RATE = 48000
 # determine number of samples in each beat to be generated, but as an int value
-beat_chunk = round(2 * RATE * 60 / BPM)
+beat_chunk = round(RATE * 60 / BPM)
 
-# Create an interface to PortAudio
-p = pyaudio.PyAudio()
+## Create an interface to PortAudio
+#p = pyaudio.PyAudio()
+
+# Create sounddevice interface?
 
 # 'output = True' indicates that the sound will be played rather than recorded
 # (https://stackoverflow.com/questions/30684230/how-to-check-if-any-sys-argv-argument-equals-a-specific-string-in-python)
-stream = p.open(format=pyaudio.paInt16,
-                channels=1,
-                rate=RATE,
-                output=True,
-                frames_per_buffer=4096)
+stream = sd.RawOutputStream(
+    samplerate=RATE,
+    blocksize=beat_chunk,
+    channels=1,
+    dtype='int16',
+)
 
 # keep track of the beat number
 beat = 0
 
 y_out = np.linspace(0, 0, beat_chunk)
 
-while (1>0):
+while (True):
     # create sine wave for the current beat
     # get_note_freq() generates a random frequency based on the given KEYNUMBER
-    t = np.linspace(0, 2*60/BPM, beat_chunk)
+    t = np.linspace(0, 60/BPM, beat_chunk)
     #amp = np.iinfo(np.int16).max
     f = get_note_freq()
 
@@ -114,16 +118,13 @@ while (1>0):
     # append to output wav file
     y_out = np.append(y_out, y_new)
 
-    # play audio in PyAudio
-    stream.write(y_new)
+    sd.wait()
+    sd.play(y_new, RATE)
 
     # update the beat number
     beat += 1
 
-    write('sample_output.wav', RATE, y_out.astype(np.int16))
+    #write('sample_output.wav', RATE, y_out.astype(np.int16))
 
 
-stream.stop_stream()
 stream.close()
-
-p.terminate()
