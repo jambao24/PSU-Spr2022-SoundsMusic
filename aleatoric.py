@@ -36,11 +36,11 @@ def freq_MIDI(k):
 # evidently I don't understand Python command line argument flags
 
 # major scale (e.g. C D E F G A B C) describing how many tones above the root we want to generate notes for
-major_scale = [0, 2, 4, 5, 7, 8, 10, 11]
+major_scale = [0, 2, 4, 5, 7, 9, 11, 12]
 
 # determine and get the frequency of one randomly generated note
 def get_note_freq():
-    MIDI_val = major_scale[random.randint(0, 8)] + KEYNUMBER
+    MIDI_val = major_scale[random.randint(0, 7)] + KEYNUMBER
     fr = freq_MIDI(MIDI_val)
     return fr
 
@@ -53,33 +53,33 @@ def get_note_freq():
 # https://stackoverflow.com/questions/21146540/trapezoidal-rule-in-python
 
 
-    # sampling rate = 48000 samples/s
-    RATE = 48000
-    CHUNK = 4096 # 2 ** 12
+# sampling rate = 48000 samples/s
+RATE = 48000
+# determine number of samples in each beat to be generated, but as an int value
+beat_chunk = round(2 * RATE * 60 / BPM)
 
-    # Create an interface to PortAudio
-    p = pyaudio.PyAudio()
+# Create an interface to PortAudio
+p = pyaudio.PyAudio()
 
-    # 'output = True' indicates that the sound will be played rather than recorded
-    # (https://stackoverflow.com/questions/30684230/how-to-check-if-any-sys-argv-argument-equals-a-specific-string-in-python)
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=1,
-                    rate=RATE,
-                    input=True,
-                    output=True,
-                    frames_per_buffer=CHUNK)
+# 'output = True' indicates that the sound will be played rather than recorded
+# (https://stackoverflow.com/questions/30684230/how-to-check-if-any-sys-argv-argument-equals-a-specific-string-in-python)
+stream = p.open(format=pyaudio.paInt16,
+                channels=1,
+                rate=RATE,
+                input=False,
+                output=True,
+                frames_per_buffer=beat_chunk)
 
+# keep track of the beat number
+beat = 0
 
-    # determine number of samples in each beat to be generated, but as an int value
-    beat_chunk = round(RATE * 60 / BPM)
-
-
+while (1>0):
     # create sine wave for the current beat
     # get_note_freq() generates a random frequency based on the given KEYNUMBER
-    t = numpy.linspace(0, 60/BPM, beat_chunk)
-    amp = numpy.iinfo(numpy.int16).max
+    t = np.linspace(0, 2*60/BPM, beat_chunk)
+    #amp = np.iinfo(np.int16).max
     f = get_note_freq()
-    y = amp * sin(2 * np.pi * f * t)
+    y = np.sin(2 * np.pi * f * t)
 
 
     # apply the window to the beat...
@@ -87,14 +87,31 @@ def get_note_freq():
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.windows.triang.html
     # if FRAC >= 0.5, we create triangular window and multiply signal by window
     if (FRAC >= 0.5):
-        window = ssw.triang(beat_chunk)
+        window = 1 #window = ssw.triang(beat_chunk)
     # otherwise, we need to use FRAC to generate our own trapezoidal window :(
     else:
         window = np.ones(beat_chunk)
-        max1 = round(beat_chunk * FREQ)
+        max1 = round(beat_chunk * FRAC)
         max2 = beat_chunk - max1
         # use np.linspace to increment the window up/down from 0/1 to 1/0
         window[0:max1] = np.linspace(0, 1, max1)
-        window[max2:beat_chunk] = np.linspacec(1, 0, max1)
+        window[max2:beat_chunk] = np.linspace(1, 0, max1)
 
     y_new = np.multiply(window, y)
+
+    if beat % SIG == 0:
+        y_new *= (10 ** (-6*(10-VOL1)/20))
+    else:
+        y_new *= (10 ** (-6*(10-VOL0)/20))
+
+    # play audio in PyAudio
+    stream.write(y_new)
+
+    # update the beat number
+    beat += 1
+
+
+stream.stop_stream()
+stream.close()
+
+p.terminate()

@@ -5,7 +5,7 @@ James Bao
 HW 4 README
 
 
-aleatoric.py is a Python program that plays continuous audio within a range of one octave from a specified root frequency according to a specified beat. 
+aleatoric.py is a Python program that plays continuous audio within a range of one octave from a specified root frequency according to a specified beat. This version proves proof of concept (it plays continuously) but doesn't handle user parameters, is written using PyAudio (has a lot of noise for some reason), and is played at double the tempo specified per the BPM. 
 
 Default parameters-
 •	--root KEYNUMBER: Use MIDI key number KEYNUMBER as the root tone of the scale. [72]
