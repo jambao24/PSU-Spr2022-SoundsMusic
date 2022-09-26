@@ -83,14 +83,16 @@ minor_scale = [0, 2, 3, 5, 7, 8, 10, 12]
 # get Krumhansl-Schmuckler values
 major_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
 minor_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
-# normalize the K-S values to compute probabilties
+# normalize the K-S values to compute probabilties (edit: maybe don't do this, we don't want the probability of any one note occuring to be 0)
 major_profile_ = major_profile
-major_profile_ -= np.min(major_profile)
+#major_profile_ -= np.min(major_profile)
 minor_profile_ = minor_profile
-minor_profile_ -= np.min(minor_profile)
-# compute probability of each note occurring
-major_profile_probs = np.divide(major_profile_, np.sum(major_profile_))
-minor_profile_probs = np.divide(minor_profile_, np.sum(minor_profile_))
+#minor_profile_ -= np.min(minor_profile)
+# compute probability of each note occurring, need to adjust for 'do' one octave higher than the base frequency
+major_profile_probs = np.divide(major_profile_, np.sum(major_profile_)+major_profile_[0])
+#print(major_profile_probs)
+minor_profile_probs = np.divide(minor_profile_, np.sum(minor_profile_)+minor_profile_[0])
+#print(minor_profile_probs)
 
 # create weighted 12-tone scale with major profile probabilities
 major_scale_weighted = np.zeros(1000)
@@ -104,15 +106,19 @@ for j in range(0, major_profile_probs.size):
     minor_scale_weighted[h: h + tempval2] = j
     i += tempval1
     h += tempval2
+# add probabilistic values for 'do' at one octave higher
+major_scale_weighted[i:1000] = major_profile_probs.size
+minor_scale_weighted[h:1000] = minor_profile_probs.size
 
 # https://www.statology.org/python-numpy-array-to-list/
 major_scale_w = major_scale_weighted.tolist()
+print(major_scale_w)
 minor_scale_w = minor_scale_weighted.tolist()
 
 # determine and get the frequency of one (non)randomly generated note
 # uses either the weighted major scale or the weighted minor scale
 def get_note_freq():
-    MIDI_val = major_scale_w[random.randint(0, 11)] + KEYNUMBER
+    MIDI_val = major_scale_w[random.randint(0, 1000)] + KEYNUMBER
     #MIDI_val = minor_scale_w[random.randint(0, 11)] + KEYNUMBER
     fr = freq_MIDI(MIDI_val)
     return fr
